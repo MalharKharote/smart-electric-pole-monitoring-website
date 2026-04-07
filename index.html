@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Electric Pole Monitoring</title>
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+
+<style>
+body{
+  font-family: Arial;
+  text-align: center;
+}
+
+#map{
+  height: 600px;
+  width: 90%;
+  margin: auto;
+  border: 2px solid black;
+}
+</style>
+
+</head>
+
+<body>
+
+<h2>Smart Electric Pole Monitoring - Vijayawada</h2>
+
+<div id="map"></div>
+
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+<script>
+
+// boundary around Vijayawada
+var vijayawadaBounds = [
+  [16.44, 80.58],
+  [16.60, 80.72]
+];
+
+// create map
+var map = L.map('map', {
+  maxBounds: vijayawadaBounds,
+  maxBoundsViscosity: 1.0,
+  minZoom: 12,
+  maxZoom: 18
+}).setView([16.5062, 80.6480], 13);
+
+// map tiles
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+ attribution: '© OpenStreetMap'
+}).addTo(map);
+
+
+// pole data
+// coordinates for poles
+var poleCoordinates = {
+  "P01": {lat:16.5062, lng:80.6480, area:"Benz Circle"},
+  "P02": {lat:16.5100, lng:80.6520, area:"MG Road"},
+  "P03": {lat:16.5005, lng:80.6450, area:"Kanuru"},
+  "P04": {lat:16.4920, lng:80.6670, area:"Autonagar"},
+  "P05": {lat:16.5105, lng:80.6525, area:"Patamata"}
+};
+
+
+// fetch pole status from backend
+fetch("http://127.0.0.1:5000/poles")
+.then(response => response.json())
+.then(data => {
+
+  Object.keys(data).forEach(function(poleID){
+
+    var status = data[poleID].status;
+
+    var pole = poleCoordinates[poleID];
+
+    if(pole){
+
+      var color = status === "fault" ? "red" : "green";
+
+      var marker = L.circleMarker([pole.lat, pole.lng], {
+        color: color,
+        radius: 8,
+        fillOpacity: 0.8
+      }).addTo(map);
+
+      marker.bindPopup(
+        "Pole ID: " + poleID +
+        "<br>Area: " + pole.area +
+        "<br>Status: " + status
+      );
+
+    }
+
+  });
+
+});
+
+</script>
+
+</body>
+</html>
